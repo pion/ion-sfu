@@ -70,7 +70,7 @@ type DownTrack struct {
 }
 
 // NewDownTrack returns a DownTrack.
-func NewDownTrack(c webrtc.RTPCodecCapability, r Receiver, bf *buffer.Factory, peerID string, mt int) (*DownTrack, error) {
+func NewDownTrack(c webrtc.RTPCodecCapability, r Receiver, bf *buffer.Factory, peerID string, mt int, enabled bool) (*DownTrack, error) {
 	return &DownTrack{
 		id:            r.TrackID(),
 		peerID:        peerID,
@@ -79,6 +79,7 @@ func NewDownTrack(c webrtc.RTPCodecCapability, r Receiver, bf *buffer.Factory, p
 		bufferFactory: bf,
 		receiver:      r,
 		codec:         c,
+		enabled:       newAtomicBool(enabled),
 	}, nil
 }
 
@@ -93,7 +94,6 @@ func (d *DownTrack) Bind(t webrtc.TrackLocalContext) (webrtc.RTPCodecParameters,
 		d.writeStream = t.WriteStream()
 		d.mime = strings.ToLower(codec.MimeType)
 		d.reSync.set(true)
-		d.enabled.set(true)
 		if rr := d.bufferFactory.GetOrNew(packetio.RTCPBufferPacket, uint32(t.SSRC())).(*buffer.RTCPReader); rr != nil {
 			rr.OnPacket(func(pkt []byte) {
 				d.handleRTCP(pkt)
