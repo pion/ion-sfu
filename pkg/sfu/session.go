@@ -46,6 +46,13 @@ func (s *Session) ID() string {
 // AddPublisher adds a transport to the session
 func (s *Session) AddPeer(peer *Peer) {
 	s.mu.Lock()
+
+	if p, ok := s.peers[peer.id]; ok {
+		Logger.V(0).Info("duplicate peer joined: cleaning up old peer %s", p.id)
+		if err := p.Close(); err != nil {
+			Logger.Error(err, "error cleaning up stale peer %s", p.id)
+		}
+	}
 	s.peers[peer.id] = peer
 	s.mu.Unlock()
 }
