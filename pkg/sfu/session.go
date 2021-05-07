@@ -38,6 +38,12 @@ func NewSession(id string, bf *buffer.Factory, dcs []*Datachannel, cfg WebRTCTra
 
 }
 
+func (s *Session) AddDataChannel(dc *Datachannel) {
+	s.mu.Lock()
+	s.datachannels = append(s.datachannels, dc)
+	s.mu.Unlock()
+}
+
 // ID return session id
 func (s *Session) ID() string {
 	return s.id

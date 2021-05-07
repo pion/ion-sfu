@@ -11,9 +11,10 @@ type (
 	// The datachannels created will be negotiated on join to all peers that joins
 	// the SFU.
 	Datachannel struct {
-		Label       string
-		middlewares []func(MessageProcessor) MessageProcessor
-		onMessage   func(ctx context.Context, args ProcessArgs, out []*webrtc.DataChannel)
+		Label            string
+		middlewares      []func(MessageProcessor) MessageProcessor
+		onMessage        func(ctx context.Context, args ProcessArgs)
+		onMessageWithOut func(ctx context.Context, args ProcessArgs, out []*webrtc.DataChannel)
 	}
 
 	ProcessArgs struct {
@@ -37,15 +38,28 @@ type (
 	}
 )
 
+func NewDataChannel(label string) *Datachannel {
+	return &Datachannel{
+		Label:       label,
+		middlewares: make([]func(MessageProcessor) MessageProcessor, 0),
+	}
+}
+
 // Use adds the middlewares to the current Datachannel.
 // The middlewares are going to be executed before the OnMessage event fires.
 func (dc *Datachannel) Use(middlewares ...func(MessageProcessor) MessageProcessor) {
 	dc.middlewares = append(dc.middlewares, middlewares...)
 }
 
+// OnMessageWithOut sets the message callback with targets for the datachannel, the event is fired
+// after all the middlewares have processed the message.
+func (dc *Datachannel) OnMessageWithOut(fn func(ctx context.Context, args ProcessArgs, out []*webrtc.DataChannel)) {
+	dc.onMessageWithOut = fn
+}
+
 // OnMessage sets the message callback for the datachannel, the event is fired
 // after all the middlewares have processed the message.
-func (dc *Datachannel) OnMessage(fn func(ctx context.Context, args ProcessArgs, out []*webrtc.DataChannel)) {
+func (dc *Datachannel) OnMessage(fn func(ctx context.Context, args ProcessArgs)) {
 	dc.onMessage = fn
 }
 
